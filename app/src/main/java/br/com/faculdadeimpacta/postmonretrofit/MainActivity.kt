@@ -44,32 +44,34 @@ class MainActivity : AppCompatActivity() {
         )
         val postmonEndpoints = retrofit.create(PostmonEndpoints::class.java)
 
+        val callback = object : Callback<CEP> {
+            // conseguimos conectar
+            override fun onResponse(p0: Call<CEP>, p1: Response<CEP>) {
+                binding.buttonConsultar.isEnabled = true
+                // tratar resposta de erro
+                p1.errorBody()?.let { body ->
+                    binding.textViewResposta.text = "FALHA2\n${body.charStream().readLines()}"
+                }
+                // tratar sucesso
+                p1.body()?.let { cep ->
+                    binding.textViewResposta.text = "SUCESSO\n${cep}"
+                }
+            }
+
+            // tratar falha ao conectar
+            override fun onFailure(p0: Call<CEP>, p1: Throwable) {
+                binding.buttonConsultar.isEnabled = true
+                binding.textViewResposta.text = "FALHA\n${p1.printStackTrace()}"
+            }
+
+        }
+
         binding.buttonConsultar.setOnClickListener {
             val cepDigitado = binding.editTextCEP.text.toString()
             binding.textViewResposta.text = "Aguardando Resposta"
             binding.buttonConsultar.isEnabled = false
 
-            postmonEndpoints.getInformacoesCEP(cepDigitado).enqueue(object : Callback<CEP> {
-                // conseguimos conectar
-                override fun onResponse(p0: Call<CEP>, p1: Response<CEP>) {
-                    binding.buttonConsultar.isEnabled = true
-                    // tratar resposta de erro
-                    p1.errorBody()?.let { body ->
-                        binding.textViewResposta.text = "FALHA2\n${body.charStream().readLines()}"
-                    }
-                    // tratar sucesso
-                    p1.body()?.let { cep ->
-                        binding.textViewResposta.text = "SUCESSO\n${cep}"
-                    }
-                }
-
-                // tratar falha ao conectar
-                override fun onFailure(p0: Call<CEP>, p1: Throwable) {
-                    binding.buttonConsultar.isEnabled = true
-                    binding.textViewResposta.text = "FALHA\n${p1.printStackTrace()}"
-                }
-
-            })
+            postmonEndpoints.getInformacoesCEP(cepDigitado).enqueue(callback)
         }
 
     }
